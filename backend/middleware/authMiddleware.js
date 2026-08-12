@@ -17,6 +17,7 @@ const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
+        code: "TOKEN_MISSING",
         message: "Not authorized, token missing",
       });
     }
@@ -30,15 +31,33 @@ const protect = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
+        code: "USER_NOT_FOUND",
         message: "User not found",
       });
     }
 
     next();
   } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        code: "TOKEN_EXPIRED",
+        message: "Access token expired",
+      });
+    }
+
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        success: false,
+        code: "TOKEN_INVALID",
+        message: "Invalid access token",
+      });
+    }
+
     return res.status(401).json({
       success: false,
-      message: "Not authorized, token invalid or expired",
+      code: "AUTHENTICATION_FAILED",
+      message: "Authentication failed",
     });
   }
 };
